@@ -1,6 +1,6 @@
-// Time (in seconds)
-const QUESTION_TIME = 3 * 60; // 3 minutes
-const GAP_TIME = 2 * 60;      // 2 minutes
+// Time settings (in seconds)
+const QUESTION_TIME = 3 * 60; // 3 minutes to think
+const GAP_TIME = 2 * 60;      // 2 minutes gap before next question
 
 const PHASE_QUESTION = "question";
 const PHASE_GAP = "gap";
@@ -10,6 +10,7 @@ let phase = PHASE_QUESTION;
 let countdownInterval = null;
 let currentPuzzle = null;
 
+// DOM elements
 const givenEquationEl = document.getElementById("givenEquation");
 const questionEquationEl = document.getElementById("questionEquation");
 const timerLabelEl = document.getElementById("timerLabel");
@@ -17,24 +18,34 @@ const timeDisplayEl = document.getElementById("timeDisplay");
 const answerBoxEl = document.getElementById("answerBox");
 const answerTextEl = document.getElementById("answerText");
 
+// Audio elements
 const bgSound = document.getElementById("bgSound");
 const alertSound = document.getElementById("alertSound");
 
-// Start background sound after first click (needed on mobile browsers)
+// Start background audio on first user tap (required by most browsers)
 document.body.addEventListener(
   "click",
   () => {
-    bgSound.volume = 0.15;
+    bgSound.volume = 0.18;
+    bgSound.currentTime = 0;
     bgSound.play().catch(() => {});
+    // Preload alert sound so it can play instantly later
+    alertSound.load();
   },
   { once: true }
 );
 
+// ------------ Basic helpers ------------
+
 function formatTime(seconds) {
-  const safe = Math.max(0, seconds);
-  const m = Math.floor(safe / 60);
-  const s = safe % 60;
-  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  seconds = Math.max(0, seconds);
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return (
+    String(m).padStart(2, "0") +
+    ":" +
+    String(s).padStart(2, "0")
+  );
 }
 
 function updateTimerDisplay() {
@@ -45,7 +56,7 @@ function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// --------- LOGIC PATTERNS (many different logics) ---------
+// ------------ Logic patterns (50 different logics) ------------
 
 const patterns = [
   {
@@ -220,47 +231,43 @@ const patterns = [
     id: 29,
     description: "Concatenate a and b as digits.",
     formula: "Result = concat(a, b)",
-    compute: (a, b) => Number(`${a}${b}`)
+    compute: (a, b) => Number("" + a + b)
   },
   {
     id: 30,
     description: "Concatenate b and a as digits.",
     formula: "Result = concat(b, a)",
-    compute: (a, b) => Number(`${b}${a}`)
+    compute: (a, b) => Number("" + b + a)
   },
   {
     id: 31,
     description: "Concatenate a and b, then add their sum.",
     formula: "Result = concat(a, b) + (a + b)",
-    compute: (a, b) => Number(`${a}${b}`) + (a + b)
+    compute: (a, b) => Number("" + a + b) + (a + b)
   },
   {
     id: 32,
     description: "Concatenate a and b, then subtract their sum.",
     formula: "Result = concat(a, b) − (a + b)",
-    compute: (a, b) => Number(`${a}${b}`) - (a + b)
+    compute: (a, b) => Number("" + a + b) - (a + b)
   },
   {
     id: 33,
     description: "Concatenate sum and product.",
     formula: "Result = concat(a + b, a × b)",
-    compute: (a, b) => Number(`${a + b}${a * b}`)
+    compute: (a, b) => Number("" + (a + b) + (a * b))
   },
   {
     id: 34,
     description: "Concatenate product and sum.",
     formula: "Result = concat(a × b, a + b)",
-    compute: (a, b) => Number(`${a * b}${a + b}`)
+    compute: (a, b) => Number("" + (a * b) + (a + b))
   },
   {
     id: 35,
     description: "Use the larger number as tens, smaller as units.",
     formula: "Result = 10 × max(a, b) + min(a, b)",
-    compute: (a, b) => {
-      const max = Math.max(a, b);
-      const min = Math.min(a, b);
-      return 10 * max + min;
-    }
+    compute: (a, b) => 10 * Math.max(a, b) + Math.min(a, b)
   },
   {
     id: 36,
@@ -352,17 +359,24 @@ const patterns = [
     id: 49,
     description: "Sum, then square the smaller and add.",
     formula: "Result = (a + b) + min(a, b)²",
-    compute: (a, b) => (a + b) + Math.min(a, b) ** 2
+    compute: (a, b) => {
+      const min = Math.min(a, b);
+      return (a + b) + Math.pow(min, 2);
+    }
   },
   {
     id: 50,
     description: "Product plus square of the larger.",
     formula: "Result = (a × b) + max(a, b)²",
-    compute: (a, b) => (a * b) + Math.max(a, b) ** 2
+    compute: (a, b) => {
+      const max = Math.max(a, b);
+      return (a * b) + Math.pow(max, 2);
+    }
   }
 ];
 
-// Create one puzzle: pick random pattern + random numbers
+// ------------ Puzzle generation ------------
+
 function generatePuzzle() {
   const pattern = patterns[Math.floor(Math.random() * patterns.length)];
 
@@ -381,9 +395,9 @@ function generatePuzzle() {
     `Logic #${pattern.id}: ${pattern.description}\n` +
     `Formula: ${pattern.formula}\n\n` +
     `Example (first line):\n` +
-    `  For a = ${a}, b = ${b} → ${firstResult}\n\n` +
+    `  a = ${a}, b = ${b} → ${firstResult}\n\n` +
     `For the question:\n` +
-    `  For a = ${c}, b = ${d} → ${secondResult}`;
+    `  a = ${c}, b = ${d} → ${secondResult}`;
 
   return {
     given,
@@ -393,12 +407,16 @@ function generatePuzzle() {
   };
 }
 
-// --------- QUIZ FLOW ---------
+// ------------ Quiz flow ------------
 
 function showNewPuzzle() {
-  if (countdownInterval) clearInterval(countdownInterval);
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
 
   currentPuzzle = generatePuzzle();
+
   givenEquationEl.textContent = currentPuzzle.given;
   questionEquationEl.textContent = currentPuzzle.question;
 
@@ -414,10 +432,10 @@ function showNewPuzzle() {
 
 function revealAnswer() {
   answerTextEl.textContent =
-    `Answer: ${currentPuzzle.answer}\n\n` +
-    currentPuzzle.logicText;
+    `Answer: ${currentPuzzle.answer}\n\n` + currentPuzzle.logicText;
 
   answerBoxEl.style.opacity = "1";
+
   phase = PHASE_GAP;
   remainingSeconds = GAP_TIME;
   timerLabelEl.textContent = "Next question in:";
@@ -426,14 +444,17 @@ function revealAnswer() {
 }
 
 function startCountdown() {
-  if (countdownInterval) clearInterval(countdownInterval);
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+  }
 
   countdownInterval = setInterval(() => {
     remainingSeconds--;
     updateTimerDisplay();
 
-    // Alert sound when 5 seconds left before answer reveal
+    // Play alert when only 5 seconds are left in THINKING phase
     if (phase === PHASE_QUESTION && remainingSeconds === 5) {
+      alertSound.currentTime = 0;
       alertSound.play().catch(() => {});
     }
 
@@ -450,5 +471,5 @@ function startCountdown() {
   }, 1000);
 }
 
-// Start the first puzzle when page loads
+// Start when page loads
 window.addEventListener("load", showNewPuzzle);
