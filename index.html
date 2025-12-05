@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Endless Logical Reasoning Quiz</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #020617;
+      border-radius: 18px;
+      padding: 24px 28px;
+      box-shadow: 0 20px 40px rgba(15,23,42,0.6);
+      max-width: 500px;
+      width: 100%;
+      border: 1px solid rgba(148,163,184,0.3);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 1.4rem;
+      text-align: center;
+      color: #fbbf24;
+      letter-spacing: 0.03em;
+    }
+    .puzzle {
+      margin-top: 20px;
+      font-size: 1.3rem;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .given { color: #a5b4fc; }
+    .question { color: #f97316; font-weight: 600; }
+
+    .timer {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+    .timer-label { font-size: 0.9rem; color: #9ca3af; }
+    .time {
+      font-family: ui-monospace, Menlo, Consolas;
+      font-size: 1.4rem;
+      margin-top: 4px;
+    }
+
+    .answer-box {
+      margin-top: 20px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(15,23,42,0.8);
+      border: 1px dashed rgba(148,163,184,0.6);
+      min-height: 70px;
+      font-size: 0.98rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      transition: opacity 0.3s ease;
+      opacity: 0.7;
+    }
+    .answer-title { font-weight: 600; margin-bottom: 4px; color: #22c55e; }
+    .controls { margin-top: 14px; text-align: center; font-size: 0.75rem; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>IQ Puzzle</h1>
+
+    <div class="puzzle">
+      <div class="given" id="givenEquation">Loading...</div>
+      <div class="question" id="questionEquation"></div>
+    </div>
+
+    <div class="timer">
+      <div class="timer-label" id="timerLabel">Time left to think:</div>
+      <div class="time" id="timeDisplay">03:00</div>
+    </div>
+
+    <div class="answer-box" id="answerBox">
+      <div class="answer-title">Answer & Logic</div>
+      <div id="answerText">Will be revealed after the timer.</div>
+    </div>
+
+    <div class="controls">
+      New questions · 3 min thinking · 2 min gap · Next Question
+    </div>
+  </div>
+
+  <!-- Background low-volume loop sound -->
+  <audio id="bgSound" loop>
+    <source src="file:///storage/emulated/O/accg.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Alert tone -->
+  <audio id="alertSound">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const QUESTION_TIME = 3 * 60; 
+    const GAP_TIME = 2 * 60;
+
+    const PHASE_QUESTION = "question";
+    const PHASE_GAP = "gap";
+
+    let remainingSeconds = QUESTION_TIME;
+    let phase = PHASE_QUESTION;
+    let countdownInterval = null;
+    let currentPuzzle = null;
+
+    const givenEquationEl = document.getElementById("givenEquation");
+    const questionEquationEl = document.getElementById("questionEquation");
+    const timerLabelEl = document.getElementById("timerLabel");
+    const timeDisplayEl = document.getElementById("timeDisplay");
+    const answerBoxEl = document.getElementById("answerBox");
+    const answerTextEl = document.getElementById("answerText");
+
+    const bgSound = document.getElementById("bgSound");
+    const alertSound = document.getElementById("alertSound");
+
+    // Autoplay background - user gesture required on phones
+    document.body.addEventListener("click", () => {
+      bgSound.volume = 0.15;
+      bgSound.play();
+    }, { once: true });
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    }
+
+    function updateTimerDisplay() {
+      timeDisplayEl.textContent = formatTime(remainingSeconds);
+    }
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function generatePuzzle() {
+      const a = randomInt(1, 9), b = randomInt(1, 9);
+      const c = randomInt(1, 9), d = randomInt(1, 9);
+      return {
+        given: `${a} + ${b} = ${(a + b) * 2}`,
+        question: `${c} + ${d} = ?`,
+        answer: (c + d) * 2,
+        logicText:
+          `Follow the same pattern:\n` +
+          `Sum × 2.\n\nExample: ${a} + ${b} = (${a} + ${b}) × 2 = ${(a + b) * 2}` +
+          `\nQuestion: ${c} + ${d} = (${c} + ${d}) × 2 = ${(c + d) * 2}`
+      };
+    }
+
+    function showNewPuzzle() {
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      currentPuzzle = generatePuzzle();
+      givenEquationEl.textContent = currentPuzzle.given;
+      questionEquationEl.textContent = currentPuzzle.question;
+
+      phase = PHASE_QUESTION;
+      remainingSeconds = QUESTION_TIME;
+      timerLabelEl.textContent = "Time left to think:";
+      answerTextEl.textContent = "Will be revealed after the timer.";
+      answerBoxEl.style.opacity = "0.7";
+
+      startCountdown();
+      updateTimerDisplay();
+    }
+
+    function revealAnswer() {
+      answerTextEl.textContent = `Answer: ${currentPuzzle.answer}\n\n` + currentPuzzle.logicText;
+      answerBoxEl.style.opacity = "1";
+
+      phase = PHASE_GAP;
+      remainingSeconds = GAP_TIME;
+      timerLabelEl.textContent = "Next question in:";
+      startCountdown();
+    }
+
+    function startCountdown() {
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      countdownInterval = setInterval(() => {
+        remainingSeconds--;
+        updateTimerDisplay();
+
+        // 🔔 play alert when 5 seconds remain
+        if (phase === PHASE_QUESTION && remainingSeconds === 5) {
+          alertSound.play();
+        }
+
+        if (remainingSeconds <= 0) {
+          clearInterval(countdownInterval);
+          if (phase === PHASE_QUESTION) revealAnswer();
+          else if (phase === PHASE_GAP) showNewPuzzle();
+        }
+      }, 1000);
+    }
+
+    window.addEventListener("load", showNewPuzzle);
+  </script>
+</body>
+</html>
