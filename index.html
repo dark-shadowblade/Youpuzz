@@ -29,14 +29,13 @@
     </div>
   </div>
 
-  <!-- Background low-volume loop sound -->
-  <audio id="bgSound" loop>
+  <!-- Use your own audio files -->
+  <audio id="bgSound" loop preload="auto">
     <source src="accg.mp3" type="audio/mpeg">
   </audio>
 
-  <!-- Alert tone when 5 seconds left -->
-  <audio id="alertSound">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3" type="audio/mpeg">
+  <audio id="alertSound" preload="auto">
+    <source src="alert.mp3" type="audio/mpeg">
   </audio>
 
   <script src="script.js"></script>
