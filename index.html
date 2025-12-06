@@ -1,41 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Endless Logical Reasoning Quiz</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <title>IQ Puzzle Stream</title>
+
+  <!-- Important for proper scaling on mobile + desktop -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="card">
-    <h1>IQ Puzzle</h1>
+    <h1>MATH IQ PUZZLE</h1>
 
-    <div class="puzzle">
-      <div class="given" id="givenEquation">Loading...</div>
-      <div class="question" id="questionEquation"></div>
-    </div>
+    <div class="main">
+      <!-- 🔥 3 examples + 1 question appear here -->
+      <div class="puzzle">
+        <div id="puzzleLines" class="puzzle-lines">Loading…</div>
+      </div>
 
-    <div class="timer">
-      <div class="timer-label" id="timerLabel">Time left to think:</div>
-      <div class="time" id="timeDisplay">03:00</div>
-    </div>
+      <div class="timer">
+        <div class="timer-label" id="timerLabel">Time left to think:</div>
+        <div class="time" id="timeDisplay">03:00</div>
+      </div>
 
-    <div class="answer-box" id="answerBox">
-      <div class="answer-title">Answer & Logic</div>
-      <div id="answerText">Will be revealed after the timer.</div>
+      <!-- 🔥 Answer + logic text appears here after timer -->
+      <div id="answerText" class="answerOverlay"></div>
     </div>
 
     <div class="controls">
-      Random logics · 3 min thinking · 2 min gap · Next Question
+      • 3 min thinking • 30 Sec Answer gap •  Next Question 
     </div>
   </div>
 
-  <!-- Use your own audio files -->
+  <!-- Background music -->
   <audio id="bgSound" loop preload="auto">
-    <source src="accg.mp3" type="audio/mpeg">
+    <source src="accg.mp3" type="audio/mpeg" />
   </audio>
 
+  <!-- Alert in last 5 seconds -->
   <audio id="alertSound" preload="auto">
-    <source src="alert.mp3" type="audio/mpeg">
+    <source src="alert.mp3" type="audio/mpeg" />
   </audio>
 
   <script src="script.js"></script>
