@@ -1,148 +1,150 @@
-/* Full-screen vertical layout – good for 9:16 streaming */
-
+/* ========== RESET ========== */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
+html,
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top, #1e293b 0, #020617 60%, #000 100%);
-  color: #e5e7eb;
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
-  min-height: 100vh;
+  height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 }
 
-/* Main vertical card – fill screen like a phone */
+/* Black background around the "phone" / vertical canvas */
+body {
+  background: #000;
+  display: flex;
+  justify-content: center;   /* center horizontally */
+  align-items: center;       /* center vertically */
+  overflow: hidden;
+}
+
+/* ========== MAIN VERTICAL CARD (REELS / SHORTS STYLE) ========== */
 .card {
-  background: rgba(2, 6, 23, 0.96);
-  border-radius: 24px;
-  padding: 18px 18px 16px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.9);
+  /* big vertical area, looks like phone / Shorts */
   width: 100%;
-  max-width: 430px;   /* feels like a phone width */
-  max-height: 100vh;
-  margin: auto;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  max-width: 540px;          /* wide enough so it’s not skinny */
+  height: 100vh;
+  background: #020617;
+  border: 1px solid #1f2937;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+  padding: 14px 16px 10px;
 
   display: flex;
   flex-direction: column;
 }
 
-/* Title area at top */
+/* Title */
 h1 {
-  margin-top: 2px;
-  margin-bottom: 8px;
-  font-size: 1.6rem;
   text-align: center;
-  color: #fbbf24;
+  color: #facc15;            /* bright yellow */
+  font-size: 1.6rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  margin-bottom: 4px;
 }
 
-/* Puzzle section – center-ish, more vertical space */
+/* Centered middle content (puzzle + timer + answer) */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* vertical center */
+}
+
+/* ========== PUZZLE BOX ========== */
 .puzzle {
-  margin-top: 10px;
-  padding: 12px 10px;
-  font-size: 1.5rem;
-  text-align: center;
-  line-height: 1.7;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(30, 64, 175, 0.22), rgba(8, 47, 73, 0.16));
-  border: 1px solid rgba(129, 140, 248, 0.45);
-}
-
-.given {
-  color: #a5b4fc;
-}
-
-.question {
-  color: #fb923c;
-  font-weight: 700;
   margin-top: 6px;
+  padding: 14px 12px;
+  text-align: center;
+  border-radius: 14px;
+  background: radial-gradient(circle at top, #111827, #020617 65%);
+  border: 1px solid #4b5563;
+  font-size: 1.5rem;
+  line-height: 1.45;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.8);
 }
 
-/* Timer big and clear – good for viewers */
+/* Multi-line puzzle text */
+.puzzle-lines {
+  color: #f9fafb;        /* very light for contrast */
+  white-space: pre-line; /* show \n as line breaks */
+  font-weight: 800;      /* bold lines */
+  letter-spacing: 0.6px;
+}
+
+/* OPTIONAL: if you later wrap each line with spans in JS, these will apply */
+.puzzle-lines span.line1 { color: #facc15; } /* yellow */
+.puzzle-lines span.line2 { color: #22d3ee; } /* cyan */
+.puzzle-lines span.line3 { color: #fb923c; } /* orange */
+.puzzle-lines span.line4 { color: #c084fc; } /* purple */
+
+/* Flash effect for question line if you add class "pulse-question" */
+@keyframes pulseQ {
+  0%   { opacity: 1;   transform: scale(1); }
+  50%  { opacity: 0.3; transform: scale(1.03); }
+  100% { opacity: 1;   transform: scale(1); }
+}
+
+.pulse-question {
+  animation: pulseQ 1s infinite;
+}
+
+/* ========== TIMER ========== */
 .timer {
-  margin-top: 16px;
+  margin-top: 14px;
   text-align: center;
-  font-size: 1.1rem;
 }
 
 .timer-label {
   font-size: 0.95rem;
-  color: #cbd5f5;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  opacity: 0.85;
+  color: #9ca3af;
 }
 
 .time {
   font-family: ui-monospace, Menlo, Consolas;
-  font-size: 2.1rem;
-  margin-top: 4px;
+  font-size: 2.4rem;
+  margin-top: 2px;
+  color: #f9fafb;
 }
 
-/* Answer box – takes chunk of vertical space, scrolls if too long */
-.answer-box {
-  margin-top: 18px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px dashed rgba(148, 163, 184, 0.7);
-  min-height: 120px;
-  max-height: 40vh;
-  font-size: 1rem;
-  line-height: 1.6;
-  white-space: pre-wrap; /* show \n as new lines */
-  transition: opacity 0.3s ease;
-  opacity: 0.7;
-  overflow-y: auto;
-}
-
-.answer-title {
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: #22c55e;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.08em;
-}
-
-/* Small info text pinned near bottom */
-.controls {
-  margin-top: auto;       /* push to bottom */
-  padding-top: 10px;
+/* ========== ANSWER TEXT BELOW PUZZLE ========== */
+.answerOverlay {
   text-align: center;
-  font-size: 0.75rem;
-  color: #9ca3af;
-  opacity: 0.85;
+  font-size: 1.35rem;
+  line-height: 1.5;
+  color: #22c55e;            /* bright green */
+  font-weight: 700;
+  margin-top: 16px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  white-space: pre-wrap;
 }
 
-/* Looks nicer on very small screens */
-@media (max-width: 480px) {
-  .card {
-    border-radius: 0;
-    max-width: 100%;
-  }
+/* ========== BOTTOM INFO TEXT ========== */
+.controls {
+  margin-top: 6px;
+  padding-top: 4px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
 
-  h1 {
-    font-size: 1.4rem;
-  }
-
+/* ========== SMALL HEIGHT DEVICES: SHRINK TEXT A BIT ========== */
+@media (max-height: 640px) {
   .puzzle {
-    font-size: 1.35rem;
+    font-size: 1.3rem;
     padding: 10px 8px;
   }
 
   .time {
-    font-size: 1.8rem;
+    font-size: 2rem;
   }
 
-  .answer-box {
-    font-size: 0.95rem;
+  .answerOverlay {
+    font-size: 1.2rem;
+    margin-top: 10px;
   }
 }
